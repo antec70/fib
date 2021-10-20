@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -36,13 +36,21 @@ func TestFib(t *testing.T) {
 	}
 
 }
+func BenchmarkSlowFib(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		SlowFib(50)
+	}
+}
+
+func BenchmarkFibonacci(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Fib(50)
+	}
+}
 
 func TestServer_CalcFib(t *testing.T) {
-	s.rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	db, _ := redismock.NewClientMock()
+	s.rdb = db
 	testsTable := []struct {
 		name               string
 		x                  uint32
@@ -67,13 +75,8 @@ func TestServer_CalcFib(t *testing.T) {
 
 func TestHandler_handleIndex(t *testing.T) {
 	t.Parallel()
-
-	s.rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
-
+	db, _ := redismock.NewClientMock()
+	s.rdb = db
 	testsTable := []struct {
 		name         string
 		url          string

@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"go-fib/app/config"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,8 +30,16 @@ func NewServer(c config.ParamsLocal) *Server {
 		})}
 }
 
+func (s *Server) RPing() {
+	_, er := s.rdb.Ping(ctx).Result()
+	if er != nil {
+		log.Fatal(er)
+	}
+}
+
 func (s *Server) Start() error {
 	s.routerConf()
+	s.RPing()
 	httpServer := &http.Server{
 		Addr:    ":" + s.config.Port,
 		Handler: s.routerConf(),
@@ -87,15 +96,26 @@ func (s *Server) handleIndex() func(http.ResponseWriter, *http.Request) {
 		ResponseOk(f, w)
 	}
 }
-
 func Fib(n uint32) uint32 {
+	if n <= 1 {
+		return n
+	}
+	var n2, n1 uint32 = 0, 1
+
+	for i := uint32(2); i < n; i++ {
+		n2, n1 = n1, n1+n2
+	}
+	return n2 + n1
+}
+
+func SlowFib(n uint32) uint32 {
 	if n == 0 {
 		return 0
 	}
 	if n < 2 {
 		return 1
 	}
-	return Fib(n-2) + Fib(n-1)
+	return SlowFib(n-2) + SlowFib(n-1)
 }
 func (s *Server) CalcFib(x, y uint32) []FibItem {
 
@@ -103,6 +123,7 @@ func (s *Server) CalcFib(x, y uint32) []FibItem {
 	for i := x; i < y; i++ {
 		r := FibItem{
 			Position: i,
+			Item:     Fib(i),
 		}
 		v, er := s.rdb.Get(ctx, fmt.Sprint(i)).Result()
 		if er == redis.Nil {
