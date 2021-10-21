@@ -1,0 +1,13 @@
+web:
+  build: .
+  working_dir: /src/fib
+  ports:
+    - "8080:8080"
+  volumes:
+    - .:/src/fib
+  links:
+    - rdb
+rdb:
+  image: redis
+  ports:
+    - "6379:6379"
