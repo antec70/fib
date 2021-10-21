@@ -123,7 +123,6 @@ func (s *Server) CalcFib(x, y uint32) []FibItem {
 	for i := x; i < y; i++ {
 		r := FibItem{
 			Position: i,
-			Item:     Fib(i),
 		}
 		v, er := s.rdb.Get(ctx, fmt.Sprint(i)).Result()
 		if er == redis.Nil {
